@@ -25,10 +25,9 @@ Tested on Windows 11 with UE 5.8 (Launcher build), Visual Studio 2026, LyraStart
 and GameAnimationSample.
 
 > [!NOTE]
-> **AI disclosure:** this plugin's code and documentation were generated with AI
-> ([Claude Code](https://claude.com/claude-code) by Anthropic), directed, reviewed and
-> tested by the maintainer on real Unreal Engine projects. Please report anything that
-> doesn't work in the issues.
+> **AI disclosure:** this plugin's code and documentation were generated with AI,
+> directed, reviewed and tested by the maintainer on real Unreal Engine projects. Please
+> report anything that doesn't work in the issues.
 
 ## Setting up a fresh Windows machine
 
