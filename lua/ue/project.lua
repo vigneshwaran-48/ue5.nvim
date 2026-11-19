@@ -25,15 +25,41 @@ local function engine_from_registry(assoc)
   return path and util.norm(vim.trim(path)) or nil
 end
 
---- Launcher installs are listed in LauncherInstalled.dat.
+local is_mac = vim.fn.has("mac") == 1
+
+--- Source builds on Linux/macOS register a GUID in Epic's Install.ini:
+---   [Installations]
+---   {GUID}=/path/to/UnrealEngine
+local function engine_from_install_ini(assoc)
+  if util.is_win then return nil end
+  local ini = is_mac and vim.fn.expand("~/Library/Application Support/Epic/UnrealEngine/Install.ini")
+    or vim.fn.expand("~/.config/Epic/UnrealEngine/Install.ini")
+  local text = util.read_file(ini)
+  if not text then return nil end
+  for line in text:gmatch("[^\r\n]+") do
+    local key, path = line:match("^%s*([^=]+)=(.+)$")
+    if key and vim.trim(key) == assoc then return util.norm(vim.trim(path)) end
+  end
+end
+
+--- Launcher installs are listed in LauncherInstalled.dat (Windows and macOS; Epic has
+--- no launcher on Linux).
 local function engine_from_launcher(assoc)
   local dat = util.is_win and "C:/ProgramData/Epic/UnrealEngineLauncher/LauncherInstalled.dat"
-    or vim.fn.expand("~/.config/Epic/UnrealEngineLauncher/LauncherInstalled.dat")
-  local data = util.read_json(dat)
+    or is_mac and vim.fn.expand("~/Library/Application Support/Epic/UnrealEngineLauncher/LauncherInstalled.dat")
+    or nil
+  local data = dat and util.read_json(dat)
   if not data or not data.InstallationList then return nil end
   for _, item in ipairs(data.InstallationList) do
     if item.AppName == "UE_" .. assoc then return util.norm(item.InstallLocation) end
   end
+end
+
+--- Where the launcher puts engines by default.
+local function default_engine_dir(assoc)
+  if util.is_win then return "C:/Program Files/Epic Games/UE_" .. assoc end
+  if is_mac then return "/Users/Shared/Epic Games/UE_" .. assoc end
+  return nil
 end
 
 local function resolve_engine(uproject_dir, assoc)
@@ -50,9 +76,9 @@ local function resolve_engine(uproject_dir, assoc)
   if assoc:match("^[%./\\]") or assoc:match("^%a:") then
     return util.norm(vim.fn.fnamemodify(uproject_dir .. "/" .. assoc, ":p"))
   end
-  local found = engine_from_launcher(assoc) or engine_from_registry(assoc)
+  local found = engine_from_launcher(assoc) or engine_from_registry(assoc) or engine_from_install_ini(assoc)
   if found then return found end
-  local default = util.is_win and ("C:/Program Files/Epic Games/UE_" .. assoc) or nil
+  local default = default_engine_dir(assoc)
   if default and util.exists(default) then return default end
 end
 
@@ -95,6 +121,14 @@ local function scan_targets(root)
   return targets
 end
 
+--- Path of an editor binary: Engine/Binaries/<Plat>/<name>(.exe), or inside the .app
+--- bundle on macOS.
+function M.editor_exe(engine, plat, name)
+  local dir = engine .. "/Engine/Binaries/" .. plat .. "/"
+  if is_mac then return dir .. name .. ".app/Contents/MacOS/" .. name end
+  return dir .. util.exe(name)
+end
+
 --- Returns the project for a buffer (or cwd), or nil when not inside a UE project.
 ---@return table|nil
 function M.get(bufnr)
@@ -116,8 +150,15 @@ function M.get(bufnr)
   }
   if engine then
     local plat = util.host_platform()
-    proj.ubt = engine .. "/Engine/Binaries/DotNET/UnrealBuildTool/" .. util.exe("UnrealBuildTool")
-    proj.editor = engine .. "/Engine/Binaries/" .. plat .. "/" .. util.exe("UnrealEditor")
+    if util.is_win then
+      proj.ubt = engine .. "/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe"
+      proj.ubt_cmd = { proj.ubt }
+    else
+      -- Epic's wrapper picks the engine's bundled .NET runtime, as Build.sh does.
+      proj.ubt = engine .. "/Engine/Build/BatchFiles/RunUBT.sh"
+      proj.ubt_cmd = { "bash", proj.ubt }
+    end
+    proj.editor = M.editor_exe(engine, plat, "UnrealEditor")
     proj.lldb_formatters = engine .. "/Engine/Extras/LLDBDataFormatters/"
       .. (util.is_win and "UEDataFormatters_2ByteChars.py" or "UEDataFormatters.py")
   end
@@ -132,8 +173,7 @@ end
 function M.editor_for(proj, cfg)
   if cfg == "DebugGame" then
     local plat = util.host_platform()
-    local exe = ("%s/Engine/Binaries/%s/UnrealEditor-%s-DebugGame"):format(proj.engine, plat, plat)
-    exe = exe .. (util.is_win and ".exe" or "")
+    local exe = M.editor_exe(proj.engine, plat, "UnrealEditor-" .. plat .. "-DebugGame")
     if util.exists(exe) then return exe, {} end
     return proj.editor, { "-debug" }
   end

@@ -21,8 +21,9 @@ Visual Studio or Rider for your UE5 projects:
   Unreal's LLDB formatters (FString, TArray, TMap, FName). You can launch the DebugGame or
   Development editor, or attach to a running one.
 
-Tested on Windows 11 with UE 5.8 (Launcher build), Visual Studio 2026, LyraStarterGame
-and GameAnimationSample.
+Tested on Windows 11 with UE 5.8 (Launcher build) and Visual Studio 2026, using the
+LyraStarterGame project. Linux and macOS support is written but **untested**; see
+[Linux](#linux-untested) and [macOS](#macos-untested).
 
 > [!NOTE]
 > **AI disclosure:** this plugin's code and documentation were generated with AI,
@@ -112,6 +113,79 @@ Then check everything from inside a UE project folder:
 - `clangd` from LLVM
 - For debugging: [nvim-dap](https://github.com/mfussenegger/nvim-dap) and `codelldb`
 - Visual Studio, for building, `:UE compiledb` and `:UE vsdebug`
+
+## Linux (untested)
+
+> [!WARNING]
+> ue5.nvim has **not been tested on Linux**. The Linux code paths are written to Epic's
+> documented layout, but nobody has run them yet. Please open an issue with what works
+> and what doesn't.
+
+1. **Unreal Engine 5.** Epic has no launcher on Linux. Either download the prebuilt
+   Linux engine from unrealengine.com, or build it from source
+   (`./Setup.sh`, `./GenerateProjectFiles.sh`, `make`). UnrealBuildTool uses the clang
+   toolchain bundled with the engine, so no separate compiler is needed to build.
+2. **Tools.** Use your distro's packages, for example on Ubuntu or Debian:
+
+   ```bash
+   sudo apt install neovim clangd ripgrep fd-find nodejs npm git
+   ```
+
+   You need Neovim 0.10 or newer; if your distro's version is older, use the official
+   AppImage. For icons, install a Nerd Font (for example JetBrainsMono Nerd Font from
+   nerdfonts.com) and select it in your terminal.
+3. **Plugin.** Use the same lazy.nvim spec, LSP line and `:MasonInstall codelldb` as in
+   [Neovim plugins](#3-neovim-plugins-lazynvim) above.
+4. **Engine detection.** ue5.nvim finds source builds through
+   `~/.config/Epic/UnrealEngine/Install.ini`. For a prebuilt engine, or if
+   `:checkhealth ue` says the engine isn't found, set it yourself:
+
+   ```lua
+   opts = { engine_path = "/home/you/UnrealEngine" }, -- the folder that contains Engine/
+   ```
+
+Builds run through Epic's `Engine/Build/BatchFiles/RunUBT.sh`, the editor is
+`Engine/Binaries/Linux/UnrealEditor`, and debugging uses codelldb with Unreal's
+`UEDataFormatters.py`.
+
+**Not available on Linux:**
+- The Visual Studio-only features: `:UE vsdebug` and Live Coding.
+- The shared-PCH fix for false "missing include" errors. It's built for MSVC command
+  lines, so on Linux clangd may show some missing includes that the real build hides.
+
+## macOS (untested)
+
+> [!WARNING]
+> ue5.nvim has **not been tested on macOS**. The macOS code paths are written to Epic's
+> documented layout, but nobody has run them yet. Please open an issue with what works
+> and what doesn't.
+
+1. **Unreal Engine 5** from the Epic Games Launcher, and **Xcode** (from the App Store)
+   with its command-line tools: `xcode-select --install`. UnrealBuildTool builds with
+   Xcode's clang.
+2. **Tools** with Homebrew:
+
+   ```bash
+   brew install neovim llvm ripgrep fd node git
+   brew install --cask font-jetbrains-mono-nerd-font
+   ```
+
+   Homebrew's `llvm` provides `clangd`; ue5.nvim finds it in `/opt/homebrew/opt/llvm/bin`.
+   Select JetBrainsMono Nerd Font in your terminal for icons.
+3. **Plugin.** Use the same lazy.nvim spec, LSP line and `:MasonInstall codelldb` as in
+   [Neovim plugins](#3-neovim-plugins-lazynvim) above.
+4. **Engine detection.** ue5.nvim reads the launcher's list in
+   `~/Library/Application Support/Epic/UnrealEngineLauncher/LauncherInstalled.dat`, and
+   source builds from `~/Library/Application Support/Epic/UnrealEngine/Install.ini`. It
+   also checks `/Users/Shared/Epic Games/UE_5.x`. If `:checkhealth ue` still can't find the
+   engine, set `engine_path` as on Linux.
+
+The editor is started from `UnrealEditor.app`, and builds run through `RunUBT.sh`.
+
+**Not available on macOS:**
+- The Visual Studio-only features: `:UE vsdebug` and Live Coding.
+- The shared-PCH fix for false "missing include" errors. It's built for MSVC command
+  lines, so on macOS clangd may show some missing includes that the real build hides.
 
 ## First run in a project
 

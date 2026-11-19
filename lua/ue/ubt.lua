@@ -12,7 +12,7 @@ end
 
 ---@param chained boolean? true when this runs right after another job (keeps its log)
 function M.build(proj, sel, on_done, chained)
-  local cmd = { proj.ubt }
+  local cmd = vim.list_extend({}, proj.ubt_cmd)
   vim.list_extend(cmd, target_args(proj, sel))
   vim.list_extend(cmd, config.options.build_args)
   job.run(cmd, {
@@ -30,7 +30,7 @@ function M.build(proj, sel, on_done, chained)
 end
 
 function M.clean(proj, sel, on_done)
-  local cmd = { proj.ubt, "-Clean" }
+  local cmd = vim.list_extend(vim.list_extend({}, proj.ubt_cmd), { "-Clean" })
   vim.list_extend(cmd, target_args(proj, sel))
   job.run(cmd, {
     title = ("Clean %s %s %s"):format(sel.target, sel.platform, sel.config),
@@ -45,7 +45,7 @@ function M.rebuild(proj, sel)
 end
 
 function M.project_files(proj)
-  job.run({ proj.ubt, "-ProjectFiles", "-Project=" .. proj.uproject, "-Game", "-Engine" }, {
+  job.run(vim.list_extend(vim.list_extend({}, proj.ubt_cmd), { "-ProjectFiles", "-Project=" .. proj.uproject, "-Game", "-Engine" }), {
     title = "Generate project files",
     quickfix = false,
   })
@@ -74,7 +74,9 @@ function M.compiledb_stale(proj)
   return newest ~= nil and newest.sec > db.mtime.sec
 end
 
-local CLANGD_FILE = [[
+-- Windows commands are cl.exe style; Linux/macOS commands are plain clang, where the
+-- /-flags would be read as file names.
+local CLANGD_FILE = util.is_win and [[
 # Written by ue5.nvim. clangd reads this next to compile_commands.json.
 CompileFlags:
   # MSVC precompiled-header flags point at .pch files clangd can't use.
@@ -82,6 +84,15 @@ CompileFlags:
   # UE builds with MSVC's conforming preprocessor (/Zc:preprocessor), but clang-cl
   # defines _MSVC_TRADITIONAL=1, which sends UE's macros down a path clang rejects.
   Add: [/U_MSVC_TRADITIONAL]
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+]] or [[
+# Written by ue5.nvim. clangd reads this next to compile_commands.json.
+CompileFlags:
+  # UBT's precompiled headers are built by the engine's clang version; clangd builds
+  # its own preamble instead.
+  Remove: [-include-pch]
 Diagnostics:
   UnusedIncludes: None
   MissingIncludes: None
@@ -289,12 +300,12 @@ end
 
 ---@param chained boolean? after a build: append to its log and keep its quickfix list
 function M.compiledb(proj, sel, on_done, chained)
-  local cmd = {
-    proj.ubt, "-Mode=GenerateClangDatabase",
+  local cmd = vim.list_extend(vim.list_extend({}, proj.ubt_cmd), {
+    "-Mode=GenerateClangDatabase",
     "-Project=" .. proj.uproject,
     sel.target, sel.platform, sel.config,
     "-OutputDir=" .. proj.root,
-  }
+  })
   local compiler = compiledb_compiler()
   if compiler then table.insert(cmd, "-Compiler=" .. compiler) end
   local started = os.time()
