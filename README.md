@@ -45,7 +45,6 @@ LyraStarterGame project. Linux and macOS support is written but **untested**; se
 
 ```powershell
 winget install Git.Git Neovim.Neovim LLVM.LLVM BurntSushi.ripgrep.MSVC sharkdp.fd OpenJS.NodeJS.LTS
-winget install DEVCOM.JetBrainsMonoNerdFont
 ```
 
 - **LLVM** provides the `clangd` ue5.nvim uses. Its installer doesn't add itself to PATH,
@@ -53,8 +52,11 @@ winget install DEVCOM.JetBrainsMonoNerdFont
   Mason's: Mason's Windows build has no zlib, can't read the compressed index, and
   re-indexes the whole project on every start.
 - **ripgrep / fd** are for Telescope. **Node** is for the npm-based language servers.
-- **Nerd Font:** in Windows Terminal, go to *Settings → Profiles → Defaults →
-  Appearance → Font face* and choose **JetBrainsMono Nerd Font Mono**.
+- **Optional, Nerd Font:** ue5.nvim itself doesn't need one. Install it only if other
+  plugins in your config show icons (neo-tree, lualine, nvim-web-devicons):
+  `winget install DEVCOM.JetBrainsMonoNerdFont`. Then in Windows Terminal, go to
+  *Settings → Profiles → Defaults → Appearance → Font face* and choose
+  **JetBrainsMono Nerd Font Mono**.
 
 Open a new terminal afterwards so PATH picks up the new tools.
 
@@ -132,8 +134,11 @@ Then check everything from inside a UE project folder:
    ```
 
    You need Neovim 0.10 or newer; if your distro's version is older, use the official
-   AppImage. For icons, install a Nerd Font (for example JetBrainsMono Nerd Font from
-   nerdfonts.com) and select it in your terminal.
+   AppImage.
+
+   *Optional:* ue5.nvim doesn't need a Nerd Font. If other plugins in your config show
+   icons, install one (for example JetBrainsMono Nerd Font from nerdfonts.com) and select
+   it in your terminal.
 3. **Plugin.** Use the same lazy.nvim spec, LSP line and `:MasonInstall codelldb` as in
    [Neovim plugins](#3-neovim-plugins-lazynvim) above.
 4. **Engine detection.** ue5.nvim finds source builds through
@@ -167,11 +172,13 @@ Builds run through Epic's `Engine/Build/BatchFiles/RunUBT.sh`, the editor is
 
    ```bash
    brew install neovim llvm ripgrep fd node git
-   brew install --cask font-jetbrains-mono-nerd-font
    ```
 
    Homebrew's `llvm` provides `clangd`; ue5.nvim finds it in `/opt/homebrew/opt/llvm/bin`.
-   Select JetBrainsMono Nerd Font in your terminal for icons.
+
+   *Optional:* ue5.nvim doesn't need a Nerd Font. If other plugins in your config show
+   icons, run `brew install --cask font-jetbrains-mono-nerd-font` and select it in your
+   terminal.
 3. **Plugin.** Use the same lazy.nvim spec, LSP line and `:MasonInstall codelldb` as in
    [Neovim plugins](#3-neovim-plugins-lazynvim) above.
 4. **Engine detection.** ue5.nvim reads the launcher's list in
