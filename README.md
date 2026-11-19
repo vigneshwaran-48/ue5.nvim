@@ -1,11 +1,25 @@
-# ue.nvim
+# ue5.nvim
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![AI generated](https://img.shields.io/badge/AI-generated-blueviolet)
+![Neovim 0.10+](https://img.shields.io/badge/Neovim-0.10%2B-green)
+![Unreal Engine 5](https://img.shields.io/badge/Unreal%20Engine-5-black)
 
-Unreal Engine 5 C++ development in Neovim: clangd IntelliSense, UnrealBuildTool builds
-with errors in the quickfix list, and debugging through nvim-dap + codelldb with Unreal's
-own LLDB formatters (FString, TArray, TMap, FName shown as values).
+A Neovim plugin for **Unreal Engine 5 C++ development**, so you can use Neovim instead of
+Visual Studio or Rider for your UE5 projects:
+
+- **clangd IntelliSense that matches Visual Studio.** It gives clangd the same shared
+  precompiled header as Unreal's build, so you don't get the false "incomplete type" and
+  "missing include" errors other setups show.
+- **A fast index after the first run.** clangd's index is saved and reused, so reopening a
+  project takes seconds.
+- **`compile_commands.json` without side effects.** `:UE compiledb` generates it, and the
+  next UnrealBuildTool build doesn't recompile your project.
+- **Builds from Neovim.** UnrealBuildTool runs with a live log window, and errors go to the
+  quickfix list.
+- **Debugging with nvim-dap and codelldb.** Breakpoints, stepping, the call stack, and
+  Unreal's LLDB formatters (FString, TArray, TMap, FName). You can launch the DebugGame or
+  Development editor, or attach to a running one.
 
 Tested on Windows 11 with UE 5.8 (Launcher build), Visual Studio 2026, LyraStarterGame
 and GameAnimationSample.
@@ -24,7 +38,7 @@ and GameAnimationSample.
   For stepping into engine code, also tick *Editor symbols for debugging* in the engine's
   install options.
 - Install **Visual Studio 2022 or 2026** with the **Game development with C++** workload
-  (MSVC compiler and Windows SDK). UnrealBuildTool needs it to build, and ue.nvim uses it
+  (MSVC compiler and Windows SDK). UnrealBuildTool needs it to build, and ue5.nvim uses it
   for `:UE compiledb` and `:UE vsdebug`.
 
 ### 2. Tools (PowerShell)
@@ -34,8 +48,8 @@ winget install Git.Git Neovim.Neovim LLVM.LLVM BurntSushi.ripgrep.MSVC sharkdp.f
 winget install DEVCOM.JetBrainsMonoNerdFont
 ```
 
-- **LLVM** provides the `clangd` ue.nvim uses. Its installer doesn't add itself to PATH,
-  and ue.nvim finds it in `C:\Program Files\LLVM\bin` anyway. Use this clangd rather than
+- **LLVM** provides the `clangd` ue5.nvim uses. Its installer doesn't add itself to PATH,
+  and ue5.nvim finds it in `C:\Program Files\LLVM\bin` anyway. Use this clangd rather than
   Mason's: Mason's Windows build has no zlib, can't read the compressed index, and
   re-indexes the whole project on every start.
 - **ripgrep / fd** are for Telescope. **Node** is for the npm-based language servers.
@@ -46,16 +60,12 @@ Open a new terminal afterwards so PATH picks up the new tools.
 
 ### 3. Neovim plugins (lazy.nvim)
 
-Put ue.nvim on the machine. For now that means copying the folder to
-`~/Documents/Projects/ue.nvim`, or cloning it there once it's on GitHub. Then add this spec:
+Add this spec. lazy.nvim downloads the plugin from GitHub:
 
 ```lua
--- lua/plugins/ue.lua
-local path = vim.fn.expand("~/Documents/Projects/ue.nvim")
+-- lua/plugins/ue5.lua
 return {
-  dir = path,
-  name = "ue.nvim",
-  cond = vim.uv.fs_stat(path) ~= nil, -- skipped on machines without the folder
+  "vigneshwaran-48/ue5.nvim",
   lazy = false,
   dependencies = { "mfussenegger/nvim-dap" },
   opts = {},
@@ -74,7 +84,9 @@ return {
 }
 ```
 
-In your LSP setup, start clangd with ue.nvim's command. Don't also let mason-lspconfig set
+The plugin's Lua module is `ue` (`require("ue")`), and its command is `:UE`.
+
+In your LSP setup, start clangd with ue5.nvim's command. Don't also let mason-lspconfig set
 up clangd, or you get two instances:
 
 ```lua
@@ -82,7 +94,7 @@ local ok_ue, ue = pcall(require, "ue")
 lspconfig.clangd.setup({ cmd = ok_ue and ue.clangd_cmd() or nil })
 ```
 
-nvim-dap needs no configuration for Unreal; ue.nvim registers its own adapter. Install
+nvim-dap needs no configuration for Unreal; ue5.nvim registers its own adapter. Install
 the debugger once:
 
 ```vim

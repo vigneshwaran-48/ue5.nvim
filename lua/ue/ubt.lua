@@ -75,7 +75,7 @@ function M.compiledb_stale(proj)
 end
 
 local CLANGD_FILE = [[
-# Written by ue.nvim. clangd reads this next to compile_commands.json.
+# Written by ue5.nvim. clangd reads this next to compile_commands.json.
 CompileFlags:
   # MSVC precompiled-header flags point at .pch files clangd can't use.
   Remove: [/Yu*, /Yc*, /Fp*, /d2*]
@@ -223,7 +223,7 @@ local function build_forced_includes(snapshot, dir, cache, wrap_dir)
             -- wrapper that #includes the real header instead.
             local wrapper = wrap_dir .. "/" .. vim.fs.basename(hdr)
             if not util.exists(wrapper) then
-              util.write_file(wrapper, ('// Written by ue.nvim\n#pragma once\n#include "%s"\n'):format(hdr))
+              util.write_file(wrapper, ('// Written by ue5.nvim\n#pragma once\n#include "%s"\n'):format(hdr))
             end
             line = ('/FI"%s"'):format(wrapper)
           end
@@ -319,7 +319,7 @@ function M.compiledb(proj, sel, on_done, chained)
     end
     detach_compiledb(proj, snapshot)
     local restored, removed = restore_build_state(snapshot)
-    require("ue.job").log(("[ue.nvim] restored %d build response files, removed %d database-only ones"):format(
+    require("ue.job").log(("[ue5.nvim] restored %d build response files, removed %d database-only ones"):format(
       restored, removed))
     local clangd_file = proj.root .. "/.clangd"
     if config.options.write_clangd_file and not util.exists(clangd_file) then

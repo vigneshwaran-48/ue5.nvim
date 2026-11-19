@@ -3,7 +3,7 @@ local M = {}
 M.is_win = vim.fn.has("win32") == 1
 
 function M.notify(msg, level)
-  vim.notify(msg, level or vim.log.levels.INFO, { title = "ue.nvim" })
+  vim.notify(msg, level or vim.log.levels.INFO, { title = "ue5.nvim" })
 end
 
 function M.norm(p)

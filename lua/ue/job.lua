@@ -28,7 +28,7 @@ local function append(lines)
   end
 end
 
---- Appends lines to ue://log (e.g. notes from ue.nvim itself).
+--- Appends lines to ue://log (e.g. notes from ue5.nvim itself).
 function M.log(...)
   append({ ... })
 end

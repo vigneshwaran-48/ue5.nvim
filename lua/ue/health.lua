@@ -4,7 +4,7 @@ local M = {}
 
 function M.check()
   local h = vim.health
-  h.start("ue.nvim")
+  h.start("ue5.nvim")
 
   if vim.fn.has("nvim-0.10") == 1 then h.ok("Neovim " .. tostring(vim.version()))
   else h.error("Neovim 0.10 or newer is required") end
