@@ -133,6 +133,9 @@ M.commands = {
   log = function() require("ue.job").open_log() end,
   cancel = function() require("ue.job").cancel() end,
   close = function() M.close_windows() end,
+  switch = function() require("ue.code").switch() end,
+  crash = function() local p = project.get(0); if p then require("ue.crash").latest(p) else util.notify("Not inside an Unreal project") end end,
+  crashes = function() local p = project.get(0); if p then require("ue.crash").pick(p) else util.notify("Not inside an Unreal project") end end,
   info = function() M.info() end,
   reload = function() project.clear_cache(); M.info() end,
 }

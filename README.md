@@ -17,6 +17,8 @@ Visual Studio or Rider for your UE5 projects:
   next UnrealBuildTool build doesn't recompile your project.
 - **Builds from Neovim.** UnrealBuildTool runs with a live log window, and errors go to the
   quickfix list.
+- **Crash call stacks in the quickfix list.** `:UE crash` reads `Saved/Crashes` and jumps
+  to the first frame in your own code. Plus header/source switching (`:UE switch`).
 - **Debugging with nvim-dap and codelldb.** Breakpoints, stepping, the call stack, and
   Unreal's LLDB formatters (FString, TArray, TMap, FName). You can launch the DebugGame or
   Development editor, or attach to a running one.
@@ -82,6 +84,9 @@ return {
     { "<leader>ul", "<cmd>UE log<cr>",           desc = "UE: build log" },
     { "<leader>ux", "<cmd>UE cancel<cr>",        desc = "UE: cancel build" },
     { "<leader>uq", "<cmd>UE close<cr>",         desc = "UE: close debug/log/quickfix windows" },
+    { "<leader>uh", "<cmd>UE switch<cr>",        desc = "UE: switch header/source" },
+    { "<leader>ur", "<cmd>UE crash<cr>",         desc = "UE: newest crash call stack" },
+    { "<leader>uR", "<cmd>UE crashes<cr>",       desc = "UE: pick a crash report" },
   },
 }
 ```
@@ -230,6 +235,9 @@ After a successful build, the compile database is regenerated automatically when
 | `:UE vsdebug` | Open the target under the Visual Studio debugger |
 | `:UE log` / `:UE cancel` | Show the output of the last job / stop it |
 | `:UE close` | Close dap-ui panels, the dap REPL, the log window and quickfix (code windows stay) |
+| `:UE switch` | Switch between header and source. Asks clangd first, then falls back to Unreal's `Public/` ↔ `Private/` layout and the module folder |
+| `:UE crash` | Put the newest crash report's call stack (from `Saved/Crashes`) in the quickfix list, and jump to the first frame in your own code |
+| `:UE crashes` | Pick a crash report from the list (time, crash type and message), then do the same |
 | `:UE reload` | Re-read the .uproject and targets |
 
 `:checkhealth ue` checks clangd, codelldb, the engine and the compile database.
