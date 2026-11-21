@@ -54,22 +54,30 @@ local function open(path)
   vim.cmd.edit(vim.fn.fnameescape(path))
 end
 
---- :UE switch — asks clangd first (it knows the include graph), falls back to the
---- Unreal folder layout when clangd isn't attached or has no answer.
+--- :UE switch — Unreal's folder layout first, clangd only when that finds nothing.
+--- From a header, clangd guesses the "source" from where the header's declarations
+--- are defined, and in UE headers the UCLASS/GENERATED_BODY macros win, so it answers
+--- with Engine/.../ObjectMacros.h. Its answer is only taken when it's the opposite
+--- kind of file (header -> source, source -> header).
 function M.switch()
   local file = vim.api.nvim_buf_get_name(0)
   if file == "" then return end
-  local function fallback()
-    local other = M.find_counterpart(file)
-    if other then open(other)
-    else util.notify("No matching header/source for " .. vim.fn.fnamemodify(file, ":t"), vim.log.levels.WARN) end
+  local other = M.find_counterpart(file)
+  if other then return open(other) end
+
+  local function none()
+    util.notify("No matching header/source for " .. vim.fn.fnamemodify(file, ":t"), vim.log.levels.WARN)
   end
   local client = vim.lsp.get_clients({ bufnr = 0, name = "clangd" })[1]
-  if not client then return fallback() end
+  if not client then return none() end
+  local from_header = is_header(vim.fn.fnamemodify(file, ":e"):lower())
   local params = vim.lsp.util.make_text_document_params(0)
   client:request("textDocument/switchSourceHeader", params, function(err, uri)
-    if err or not uri or uri == vim.NIL or uri == "" then return fallback() end
-    open(vim.uri_to_fname(uri))
+    if err or not uri or uri == vim.NIL or uri == "" then return none() end
+    local target = vim.uri_to_fname(uri)
+    local target_is_header = is_header(vim.fn.fnamemodify(target, ":e"):lower())
+    if target_is_header == from_header or util.norm(target) == util.norm(file) then return none() end
+    open(target)
   end, 0)
 end
 

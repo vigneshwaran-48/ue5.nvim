@@ -235,7 +235,7 @@ After a successful build, the compile database is regenerated automatically when
 | `:UE vsdebug` | Open the target under the Visual Studio debugger |
 | `:UE log` / `:UE cancel` | Show the output of the last job / stop it |
 | `:UE close` | Close dap-ui panels, the dap REPL, the log window and quickfix (code windows stay) |
-| `:UE switch` | Switch between header and source. Asks clangd first, then falls back to Unreal's `Public/` ↔ `Private/` layout and the module folder |
+| `:UE switch` | Switch between header and source: the same folder, Unreal's `Public/` ↔ `Private/` layout, then the whole module. Asks clangd only if none of those has a match (clangd's own guess from a UE header is often `ObjectMacros.h`) |
 | `:UE crash` | Put the newest crash report's call stack (from `Saved/Crashes`) in the quickfix list, and jump to the first frame in your own code |
 | `:UE crashes` | Pick a crash report from the list (time, crash type and message), then do the same |
 | `:UE reload` | Re-read the .uproject and targets |
